@@ -1,0 +1,32 @@
+logType:
+  source:     "tail"
+  system:     "test"
+  path:       "/opt/log/test/test.log"
+  posPath:    "/etc/logs/pos/test.pos"
+  tag:        "test.tail.log"
+  timeFormat: "%Y-%m-%d %H:%M:%S"
+  parseType:  "regexp"
+
+recordTransformer:
+  removeKeys:
+    - "Message"
+    - "Test"
+    - "severity"
+  modifyFields:
+    - field: "Action"
+      modify: "${record['Field1'].strip}"
+    - field: "severity"
+      modify: "${record['Field2'].gsub(/FAILURE|SUCCESS/,'FAILURE' => 'WARN', 'SUCCESS' => 'INFO')}"
+
+fields:
+  - name: "time"
+    regex: "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}"
+    delimiter: "\\s+"
+  - name: "Field1"
+    regex: "([^ ]+)"
+    delimiter: "\\s+\\|\\s+"
+  - name: "Field2"
+    regex: "([^\\|]+)"
+    delimiter: "\\|"
+  - name: "Message"
+    regex: "([^\\n]+)"

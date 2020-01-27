@@ -1,0 +1,50 @@
+logType:
+  source:     "tail"
+  system:     "tes"
+  path:       "/opt/log/test/test.log"
+  posPath:    "/etc/logs/pos/test.pos"
+  tag:        "test.multiformat.log"
+  timeFormat: "%Y-%m-%d %H:%M:%S"
+  parseType:  "multi_format"
+
+recordTransformer:
+  removeKeys:
+    - "Message"
+    - "Test"
+    - "severity"
+  modifyFields:
+    - field: "Action"
+      modify: "${record['Field1'].strip}"
+    - field: "severity"
+      modify: "${record['Field2'].gsub(/FAILURE|SUCCESS/,'FAILURE' => 'WARN', 'SUCCESS' => 'INFO')}"
+
+multiFormat:
+  - type: "regexp"
+    fields:
+      - name: "time"
+        regex: "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}"
+        delimiter: "\\s+"
+      - name: "Field1"
+        regex: "([^ ]+)"
+        delimiter: "\\s+\\|\\s+"
+      - name: "Field2"
+        regex: "([^\\|]+)"
+        delimiter: "\\|"
+      - name: "Field3"
+        regex: "([^\\|]+)"
+        delimiter: "\\|"
+  - type: "regexp"
+    fields:
+      - name: "time"
+        regex: "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}"
+        delimiter: "\\s+"
+      - name: "Field1"
+        regex: "([^ ]+)"
+        delimiter: "\\s+\\|\\s+"
+      - name: "Field2"
+        regex: "([^\\|]+)"
+        delimiter: "\\|"
+      - name: "Field3"
+        regex: "([^\\|]+)"
+        delimiter: "\\|"
+

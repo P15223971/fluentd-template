@@ -1,0 +1,61 @@
+{{ print "# DO NOT EDIT - this file is templated. See scripts/ directory" }}
+{{- if .RecordTransformer }}
+<filter {{ .LogType.Tag }}>
+  @type record_transformer
+  enable_ruby
+  {{- if .RecordTransformer.ModifyFields }}
+  <record>
+    {{- range $fieldToModify := .RecordTransformer.ModifyFields}}
+    {{ $fieldToModify.Name }} {{ $fieldToModify.Action -}}
+    {{- end}}
+    Hostname ${hostname}
+  </record>
+  {{- end }}
+  {{ if .RecordTransformer.RemoveKeys -}}
+  remove_keys{{" "}}
+  {{- $keys := .RecordTransformer.RemoveKeys }}
+  {{- range $index, $key := .RecordTransformer.RemoveKeys -}}
+  {{- if eq ($key) (index $keys 0) -}}
+  {{- $key -}}
+  {{- else -}}
+  ,{{- $key -}}
+  {{- end }}
+  {{- end }}
+  {{- end }}
+</filter>
+{{- end }}
+
+ <source>
+  @type {{ .LogType.Source }}
+  path {{ .LogType.Path }}
+  pos_file {{ .LogType.PosPath }}
+  tag {{ .LogType.Tag }}
+  time_format {{ .LogType.TimeFormat }}
+  <parse>
+    @type {{ .LogType.ParseType }}
+    {{- if eq .LogType.ParseType "regexp" }}
+    expression /^
+    {{- end }}
+    {{- if eq .LogType.ParseType "multiline" }}
+    format_firstline /{{- .LogType.FormatFirstLine -}}/
+    format1 /^
+    {{- end -}}
+    {{- if eq .LogType.ParseType "multi_format" }}
+    {{ range $format := .MultiFormat -}}
+    <pattern>
+      format {{ $format.Type }}
+      expression /^
+      {{- range $multiFormatField := $format.Fields -}}
+      (?<{{- $multiFormatField.Name -}}>{{- $multiFormatField.Regex -}}){{- $multiFormatField.Delimiter -}}
+      {{- end -}}
+      /
+    </pattern>
+    {{ end -}}
+    {{- end }}
+    {{- if ne .LogType.ParseType "multi_format" }}
+    {{- range $field := .Fields -}}
+    (?<{{- $field.Name -}}>{{- $field.Regex -}}){{- $field.Delimiter -}}
+    {{- end -}}/
+    {{- end }}
+  </parse>
+</source>

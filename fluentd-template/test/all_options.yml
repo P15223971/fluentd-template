@@ -1,0 +1,59 @@
+---
+logType:
+  - source: tail
+            forward
+  - system: pingfederate
+            daon
+            zscaler
+  - path: "/opt/pingfederate/log/audit/____.log"
+          "C:\Daon\log\____.log"
+  - timeFormat: %Y-%m-%d %H:%M:%S
+  - parseType:  regexp
+                multiline
+      - firstLine: \d{2}:\d{2}:\d{2}
+  - delimiter: \|
+
+recordTransformer:
+  - removeKeys:
+      - field: Message
+  - modifyFields:
+      - field: field1
+          - modify: ${record['field1'].strip}
+      - field: field2
+          - modify: ${record['field2'].gsub(/FAILURE|SUCCESS/,"FAILURE" => "WARN", "SUCCESS" => "INFO")}
+
+fields:
+  - name: time
+      - regex: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}
+      - delimiter: \s+
+
+  - name: Environment
+      - regex: ([^ ]+)
+      - delimiter: \s+\|\s+
+
+  - name: Event
+      - regex: ([^\|]+)
+      - delimiter: \|
+
+  - name: User
+      - regex: ([^\|]+)
+      - delimiter: \|
+
+  - name: Action
+      - regex: ([^\|]+)
+      - delimiter: \|
+
+  - name: CPID
+      - regex: ([^\|]+)
+      - delimiter: \|
+
+  - name: DaonID
+      - regex: ([^\|]+)
+      - delimiter: \|
+
+  - name: Outcome
+      - regex: ([^\|]+)
+      - delimiter: \|
+
+  - name: Message
+      - regex: ([^\n]+)
