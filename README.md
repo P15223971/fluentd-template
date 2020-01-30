@@ -1,4 +1,4 @@
-# Stackdriver Logging Configuration #
+# Fluentd / Google Stackdriver Logging Configuration #
 ___
 
 ## Useful tools: ##
@@ -7,6 +7,9 @@ ___
  2. [Fluentular](https://fluentular.herokuapp.com/) for checking fluentd statements with sample log entries
  3. Ruby [strftime](https://apidock.com/ruby/Time/strftime) reference for formatting timestamp fields
  
+ ___
+ 
+ *Not all fluentd parse/filter configurations have been built into this template script. Please feel free to add other options as per your requirements.*
  ___
  
  * To add/modify a log file configuration for stackdriver, see the `configs` directory. Do not directly edit the `.conf` files found in the `logging-config` directory.
@@ -18,6 +21,15 @@ ___
  * All ` \ ` characters in the configuration files require escaping (e.g. ` \\ `), see existing logs for examples
  
  * Optional features follow indenting (e.g. the 'modifyFields' option is only available under the 'recordTransformer' heading)
+ ___
+ 
+ ## How to use this script: ##
+ 
+ 1. Set the folder structure as desired, and ensure the directory mappings are up to date in `main.go`
+ 
+ 2. Write the `.yaml` configurations for the logs you need to ingest
+ 
+ 3. Run `main.go` to generate the fluentd `.conf` files
  ___
  
  ## Breakdown of config file ##
