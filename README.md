@@ -1,4 +1,4 @@
-# Fluentd / Google Stackdriver Logging Configuration #
+# Fluentd / Google Stackdriver Configuration Templater #
 ___
 
 ## Useful tools: ##
@@ -25,14 +25,16 @@ ___
  
  ## How to use this script: ##
  
- 1. Set the folder structure as desired, and ensure the directory mappings are up to date in `main.go`
+ 1. Set the folder structure as desired, and ensure the directory mappings are up to date in `scripts/main.go`
  
- 2. Write the `.yaml` configurations for the logs you need to ingest
+ 2. Write the `.yaml` configurations to `scripts/template-configs/`
  
- 3. Run `main.go` to generate the fluentd `.conf` files
+ 3. Run `scripts/main.go` to generate the fluentd `.conf` files
+ 
+ By default, `.conf` files will be generated in the `log-configs/fluentd-config/` directory
  ___
  
- ## Breakdown of config file ##
+ ## YAML Cheat Sheet ##
  
  ```
  # All placeholders are marked in the format: {PLACEHOLDER} 
@@ -49,6 +51,8 @@ ___
    timeFormat:      "{RUBY STRFTIME TIME FORMAT}"                                    # e.g. %H:%M:%S for a log starting '11:59:59'
    parseType:       "{FLUENTD PARSE TYPE}"                                           # either 'regexp', 'multiline' or 'multi_format' 
    formatFirstLine: "{REGEX TO TRACK START OF NEW ENTRY (USUALLY THE TIME/DATE)}"    # MULTILINE parseType ONLY - regex that will determine the start of a log entry
+   regex:           "{GLOBAL REGEX}"                                                 # Gloabl regex that will be used in every field unless explicitly overwritten                                   
+   delimiter:       "{GLOBAL DELIMITER}"                                             # Global delimiter that will be used to separate every field unless explicitly overwritten                                   
                                                                                      #
  recordTransformer:                                                                  # OPTIONAL - allows for transformation of the log before sending it to GCP
    removeKeys:                                                                       # OPTIONAL - removes specified fields from the log
@@ -59,8 +63,8 @@ ___
                                                                                      #
  fields:                                                                             # REGEXP/MULTILINE parseType ONLY
    - name: "{FIRST FIELD IN LOG}"                                                    # Name of the field - may be GCP reserved (see below)
-     regex: "{REGEX TO CAPTURE FIRST FIELD OF LOG}"                                  # Regular expression to match the content of this field
-     delimiter: "{REGEX TO DENOTE END OF FIRST FIELD}"                               # Regular expression to match the delimter between two fields
+     regex: "{REGEX TO CAPTURE FIRST FIELD OF LOG}"                                  # OPTIONAL IF GLOBAL REGEX DECLARED - Regular expression to match the content of this field (Overrides global regex)
+     delimiter: "{REGEX TO DENOTE END OF FIRST FIELD}"                               # OPTIONAL IF GLOBAL DELIMITER DECLARED - Regular expression to match the delimter between two fields (Overrides global delimiter)
    - name: "{NEXT FIELD IN LOG}"                                                     #    
      regex: "{REGEX TO CAPTURE CURRENT FIELD}"                                       #
      delimiter: "{REGEX TO DENOTE END OF CURRENT FIELD}"                             #
