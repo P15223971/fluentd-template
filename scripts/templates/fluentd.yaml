@@ -1,0 +1,97 @@
+{{ print "# DO NOT EDIT - this file is templated. See scripts/fluentd-template directory" }}
+{{- if .RecordTransformer }}
+<filter {{ .LogType.Tag }}>
+  @type record_transformer
+  enable_ruby
+  {{- if .RecordTransformer.ModifyFields }}
+  <record>
+    {{- range $fieldToModify := .RecordTransformer.ModifyFields}}
+    {{ $fieldToModify.Name }} {{ $fieldToModify.Action -}}
+    {{- end}}
+    Hostname ${hostname}
+  </record>
+  {{- end }}
+  {{ if .RecordTransformer.RemoveKeys -}}
+  remove_keys{{" "}}
+  {{- $keys := .RecordTransformer.RemoveKeys }}
+  {{- range $index, $key := .RecordTransformer.RemoveKeys -}}
+  {{- if eq ($key) (index $keys 0) -}}
+  {{- $key -}}
+  {{- else -}}
+  ,{{- $key -}}
+  {{- end -}}
+  {{- end -}}
+  {{ end }}
+</filter>
+{{- end }}
+
+<source>
+  @type {{ .LogType.Source }}
+  path {{ .LogType.Path }}
+  pos_file {{ .LogType.PosPath }}
+  tag {{ .LogType.Tag }}
+  time_format {{ .LogType.TimeFormat }}
+  <parse>
+    @type {{ .LogType.ParseType }}
+    {{- if eq .LogType.ParseType "regexp" }}
+    expression /^
+    {{- end }}
+    {{- if eq .LogType.ParseType "multiline" }}
+    format_firstline /{{- .LogType.FormatFirstLine -}}/
+    format1 /^
+    {{- end -}}
+    {{- if eq .LogType.ParseType "multi_format" }}
+    {{ range $format := .MultiFormat -}}
+    <pattern>
+      format {{ $format.Type }}
+      expression /^
+      {{- $fields := .Fields -}}
+      {{- range $index, $field := $format.Fields -}}
+      {{- if not (lastFieldInEntry $index $fields)}}
+      {{- if $field.Delimiter -}}
+      {{- if $field.Regex -}}
+      (?<{{- $field.Name -}}>{{- $field.Regex -}}){{- $field.Delimiter -}}
+      {{- else -}}
+      (?<{{- $field.Name -}}>{{- $.LogType.Regex -}}){{- $field.Delimiter -}}
+      {{- end -}}
+      {{- else -}}
+      {{- if $field.Regex -}}
+      (?<{{- $field.Name -}}>{{- $field.Regex -}}){{- $.LogType.Delimiter -}}
+      {{- else -}}
+      (?<{{- $field.Name -}}>{{- $.LogType.Regex -}}){{- $.LogType.Delimiter -}}
+      {{- end -}}
+      {{- end -}}
+      {{- end -}}
+      {{- if lastFieldInEntry $index $fields -}}
+      (?<{{- $field.Name -}}>{{- $field.Regex -}})
+      {{- end -}}
+      {{- end -}}
+      /
+    </pattern>
+    {{ end -}}
+    {{- end }}
+    {{- if ne .LogType.ParseType "multi_format" }}
+    {{- $fields := .Fields -}}
+    {{- range $index, $field := .Fields -}}
+    {{- if not (lastFieldInEntry $index $fields)}}
+    {{- if $field.Delimiter -}}
+    {{- if $field.Regex -}}
+    (?<{{- $field.Name -}}>{{- $field.Regex -}}){{- $field.Delimiter -}}
+    {{- else -}}
+    (?<{{- $field.Name -}}>{{- $.LogType.Regex -}}){{- $field.Delimiter -}}
+    {{- end -}}
+    {{- else -}}
+    {{- if $field.Regex -}}
+    (?<{{- $field.Name -}}>{{- $field.Regex -}}){{- $.LogType.Delimiter -}}
+    {{- else -}}
+    (?<{{- $field.Name -}}>{{- $.LogType.Regex -}}){{- $.LogType.Delimiter -}}
+    {{- end -}}
+    {{- end -}}
+    {{- end -}}
+    {{- if lastFieldInEntry $index $fields -}}
+    (?<{{- $field.Name -}}>{{- $field.Regex -}})
+    {{- end -}}
+    {{- end -}}/
+    {{- end }}
+  </parse>
+</source>
